@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#0b2233">
+  <meta name="description" content="Beach Hamster — roam freely along the shoreline collecting sand dollars while dodging waves, crabs, and seagulls. An STF Arcade game.">
+  <title>Beach Hamster — STF Arcade</title>
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div id="app">
+
+  <header id="hud">
+    <a id="backBtn" class="btn-back" href="https://arcade.stabthefinger.com">← STF Arcade</a>
+    <div id="stats">
+      <div class="stat"><span class="lbl">SCORE</span><span class="val" id="hudScore">0</span></div>
+      <div class="stat"><span class="lbl">BEST</span><span class="val" id="hudHi">0</span></div>
+      <div class="stat"><span class="lbl">SHELLS</span><span class="val" id="hudShells">0</span></div>
+      <div class="stat"><span class="lbl">TIME</span><span class="val" id="hudTime">00:00</span></div>
+      <div class="stat hearts"><span class="lbl">LIVES</span><span class="val" id="hudHearts">♥♥♥</span></div>
+    </div>
+    <div id="toggles">
+      <button id="btnView" class="chip" type="button" title="Toggle Auto / Portrait / Landscape">VIEW: AUTO</button>
+      <button id="btnTilt" class="chip off" type="button" title="Toggle mobile tilt steering">TILT</button>
+      <button id="btnSound" class="chip" type="button" title="Toggle sound (M)">SND</button>
+      <button id="btnPause" class="chip" type="button" title="Pause (P / Esc)">❚❚</button>
+    </div>
+  </header>
+
+  <main id="stage">
+    <canvas id="game" width="1280" height="720"></canvas>
+
+    <div id="screens">
+
+      <section class="screen active" id="screen-menu">
+        <div class="panel">
+          <div class="brand">STF ARCADE FREE-ROAM SHORELINE</div>
+          <h1 class="title">BEACH<br>HAMSTER</h1>
+          <div class="subtitle">LOW TIDE EXPLORER</div>
+          <div class="tier-preview">
+            <span class="tier-pill common">COMMON 10</span>
+            <span class="tier-pill medium">SUN-BLEACHED 25</span>
+            <span class="tier-pill pearl">GOLDEN PEARL 100</span>
+          </div>
+          <div class="menu-btns">
+            <button class="btn primary" id="btnPlay" type="button">▶ RUN THE BEACH</button>
+            <button class="btn" id="btnHow" type="button">HOW TO PLAY</button>
+            <button class="btn" id="btnBoard" type="button">LEADERBOARD</button>
+          </div>
+          <div class="hi-line">YOUR BEST: <b id="menuHi">0</b></div>
+          <p class="hint">Desktop: WASD / Arrows · Mobile: Drag or optional Tilt</p>
+          <p class="foot">An STF Arcade release</p>
+        </div>
+      </section>
+
+      <section class="screen" id="screen-how">
+        <div class="panel wide">
+          <h2>SHORELINE GUIDE</h2>
+          <div class="how-grid">
+            <div>
+              <h3>Controls</h3>
+              <ul>
+                <li><b>Desktop:</b> <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> or <kbd>Arrow</kbd> keys to roam freely in any direction along the endless shoreline.</li>
+                <li><b>Mobile:</b> Drag anywhere on the beach for direct 1:1 steering, or enable <b>TILT</b> in the HUD / Pause menu.</li>
+                <li><b>View Toggle:</b> Auto-detects 9:16 portrait on mobile and 16:9 landscape on desktop, or switch manually via <b>VIEW</b>.</li>
+                <li><kbd>P</kbd> / <kbd>Esc</kbd> pause · <kbd>M</kbd> sound</li>
+              </ul>
+              <h3>Sand Dollar Tiers</h3>
+              <div class="legend"><canvas class="ico" id="icoCommon" width="48" height="48"></canvas><div><b>Large / Common (10 pts)</b><br>Generous hitbox, plain bleached white along safe mid-beach lanes.</div></div>
+              <div class="legend"><canvas class="ico" id="icoMedium" width="48" height="48"></canvas><div><b>Medium / Sun-Bleached (25 pts)</b><br>Standard hitbox, crisp ivory with a subtle star pattern off the main line.</div></div>
+              <div class="legend"><canvas class="ico" id="icoPearl" width="48" height="48"></canvas><div><b>Tiny / Golden "Pearl" (100 pts)</b><br>Tight precision hitbox, golden sheen &amp; glint in receding wash or crab gaps!</div></div>
+            </div>
+            <div>
+              <h3>Beach Hazards (3 Lives)</h3>
+              <div class="legend"><canvas class="ico" id="icoWave" width="48" height="48"></canvas><div><b>Incoming Waves</b><br>Watch for bubbling foam at the surf edge before waves surge up the beach!</div></div>
+              <div class="legend"><canvas class="ico" id="icoCrab" width="48" height="48"></canvas><div><b>Scurrying Crabs</b><br>Scuttle in from either side of the beach. Thread tight crab pairs for Golden Pearls.</div></div>
+              <div class="legend"><canvas class="ico" id="icoGull" width="48" height="48"></canvas><div><b>Swooping Seagulls</b><br>Track their dark sand shadow — dodge out of the strike ring when they dive!</div></div>
+            </div>
+          </div>
+          <div class="menu-btns row">
+            <button class="btn primary" id="btnHowPlay" type="button">▶ RUN THE BEACH</button>
+            <button class="btn" id="btnHowBack" type="button">BACK</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="screen" id="screen-board">
+        <div class="panel wide">
+          <h2>TOP 25 BEACH RUNNERS</h2>
+          <div id="boardModeNotice" class="board-mode-notice"></div>
+          <div class="table-wrap">
+            <table id="boardTable">
+              <thead><tr><th>#</th><th>PLAYER</th><th>SCORE</th><th>SHELLS</th><th>TIME</th><th class="hide-sm">DATE</th></tr></thead>
+              <tbody id="boardBody"></tbody>
+            </table>
+            <div id="boardMsg" class="board-msg">Loading…</div>
+          </div>
+          <div class="menu-btns row">
+            <button class="btn primary" id="btnBoardPlay" type="button">▶ RUN THE BEACH</button>
+            <button class="btn" id="btnBoardRefresh" type="button">REFRESH</button>
+            <button class="btn" id="btnBoardBack" type="button">BACK</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="screen" id="screen-pause">
+        <div class="panel">
+          <h2>BEACH BREAK</h2>
+          <p class="tag">Take a breather in the shade.</p>
+          <div class="pause-section">
+            <span class="lbl">SCREEN ORIENTATION</span>
+            <div class="seg-group">
+              <button class="seg-btn active" type="button" data-orient="auto">AUTO</button>
+              <button class="seg-btn" type="button" data-orient="portrait">PORTRAIT 9:16</button>
+              <button class="seg-btn" type="button" data-orient="landscape">LANDSCAPE 16:9</button>
+            </div>
+          </div>
+          <div class="pause-section">
+            <span class="lbl">MOBILE MOTION</span>
+            <button class="btn small" id="btnPauseTilt" type="button">TILT STEER: OFF</button>
+            <div id="tiltStatus" class="tilt-status"></div>
+          </div>
+          <div class="menu-btns">
+            <button class="btn primary" id="btnResume" type="button">RESUME</button>
+            <button class="btn" id="btnQuit" type="button">QUIT TO MENU</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="screen" id="screen-over">
+        <div class="panel wide over-panel">
+          <h2 class="red">WIPEOUT!</h2>
+          <div class="newhigh" id="newHigh">★ NEW PERSONAL BEST ★</div>
+          <div class="results">
+            <div><span class="lbl">SCORE</span><b id="goScore">0</b></div>
+            <div><span class="lbl">SAND DOLLARS</span><b id="goShells">0</b></div>
+            <div><span class="lbl">SURVIVED</span><b id="goTime">00:00</b></div>
+          </div>
+          <div class="tier-breakdown" id="goBreakdown"></div>
+
+          <form id="submitForm" autocomplete="off">
+            <label for="nameInput" class="lbl">POST TO GLOBAL LEADERBOARD</label>
+            <div class="name-badge-wrapper">
+              <div class="badge-panel">
+                <div class="badge-caption">BEACH TAG:</div>
+                <input id="nameInput" type="text" maxlength="12" placeholder="HAMSTER" spellcheck="false" autocapitalize="characters">
+              </div>
+              <button class="btn primary" id="btnSubmit" type="submit">SUBMIT</button>
+            </div>
+            <div id="submitMsg" class="submit-msg"></div>
+          </form>
+
+          <div class="over-board">
+            <div class="over-board-head">
+              <span class="lbl">TOP SCORES</span>
+              <span id="overBoardNotice" class="over-board-notice"></span>
+            </div>
+            <div class="table-wrap compact">
+              <table>
+                <thead><tr><th>#</th><th>PLAYER</th><th>SCORE</th><th>SHELLS</th><th>TIME</th></tr></thead>
+                <tbody id="overBoardBody"></tbody>
+              </table>
+              <div id="overBoardMsg" class="board-msg">Loading…</div>
+            </div>
+          </div>
+
+          <div class="menu-btns row">
+            <button class="btn primary" id="btnAgain" type="button">▶ RUN AGAIN</button>
+            <button class="btn" id="btnOverBoard" type="button">FULL BOARD</button>
+            <button class="btn" id="btnOverMenu" type="button">MENU</button>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </main>
+</div>
+
+<script src="js/config.js"></script>
+<script src="js/audio.js"></script>
+<script src="js/input.js"></script>
+<script src="js/game.js"></script>
+<script src="js/ui.js"></script>
+</body>
+</html>

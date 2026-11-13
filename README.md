@@ -59,3 +59,9 @@ Upload the repository contents to your web root or subdirectory (e.g. `public_ht
 - Root `.htaccess` and `data/.htaccess` block directory listings, dotfiles, SQLite database/journal/WAL files, logs, backups, and Markdown documentation.
 - `api/submit_score.php` enforces rate limiting, input validation, and server-side score plausibility bounds accounting for stacked Surf + Beachcomber Chain multipliers.
 - Configure `ARCADE_URL` in `js/config.js` if needed.
+
+---
+
+## License
+
+MIT License © 2026 Anthony Moore / None Yet Studios

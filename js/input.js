@@ -1,22 +1,25 @@
-/* Beach Hamster - unified keyboard (WASD/Arrows), touch drag, and optional DeviceOrientation tilt input. */
+/* Beach Hamster - unified keyboard (WASD/Arrows), floating touch joystick, and optional DeviceOrientation tilt input. */
 (function () {
   'use strict';
   window.BH = window.BH || {};
 
-  const stage = document.getElementById('stage');
-  const canvas = document.getElementById('game');
+  const touchPad = document.getElementById('touchPad');
+  const touchPadCanvas = document.getElementById('touchPadCanvas');
+  const touchPadCtx = touchPadCanvas ? touchPadCanvas.getContext('2d') : null;
   const keys = Object.create(null);
 
-  let logicalW = 1280;
-  let logicalH = 720;
+  const DEADZONE = 10;   // inner deadzone in #touchPad px
+  const MAX_RADIUS = 42; // max radius in #touchPad px for full magnitude
 
-  const touchState = {
+  const joystick = {
+    active: false,
     activeId: null,
-    lastX: 0,
-    lastY: 0,
-    dragDx: 0,
-    dragDy: 0,
-    isTouchDevice: false
+    originX: 0,
+    originY: 0,
+    currX: 0,
+    currY: 0,
+    vx: 0,
+    vy: 0
   };
 
   const tiltState = {
@@ -32,7 +35,6 @@
   };
 
   if (window.matchMedia && window.matchMedia('(pointer: coarse)').matches) {
-    touchState.isTouchDevice = true;
     document.body.classList.add('touch');
   }
 
@@ -53,63 +55,171 @@
     keys[e.code] = false;
   });
 
+  function clearJoystick() {
+    joystick.active = false;
+    joystick.activeId = null;
+    joystick.originX = 0;
+    joystick.originY = 0;
+    joystick.currX = 0;
+    joystick.currY = 0;
+    joystick.vx = 0;
+    joystick.vy = 0;
+    renderTouchPadJoystick();
+  }
+
   window.addEventListener('blur', function () {
     for (const k in keys) keys[k] = false;
-    touchState.activeId = null;
-    touchState.dragDx = 0;
-    touchState.dragDy = 0;
+    clearJoystick();
   });
 
-  /* ---- Touch / Pointer Drag (1:1 relative drag in logical coordinates) ---- */
-  function toLogicalScale() {
-    const r = canvas.getBoundingClientRect();
-    if (!r.width || !r.height) return { sx: 1, sy: 1 };
-    return { sx: logicalW / r.width, sy: logicalH / r.height };
+  /* ---- Floating Touch Joystick (#touchPad Coordinates) ---- */
+  function toPadCoords(clientX, clientY) {
+    if (!touchPad) return { x: 0, y: 0 };
+    const r = touchPad.getBoundingClientRect();
+    return {
+      x: clientX - r.left,
+      y: clientY - r.top
+    };
   }
 
-  stage.addEventListener('pointerdown', function (e) {
-    if (!document.body.classList.contains('playing')) return;
-    if (e.pointerType === 'touch' || e.pointerType === 'pen') {
-      touchState.isTouchDevice = true;
-      document.body.classList.add('touch');
+  function renderTouchPadJoystick() {
+    if (!touchPad || !touchPadCanvas || !touchPadCtx) return;
+    const w = touchPad.clientWidth;
+    const h = touchPad.clientHeight;
+    if (!w || !h) return;
+
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const targetW = Math.round(w * dpr);
+    const targetH = Math.round(h * dpr);
+    if (touchPadCanvas.width !== targetW || touchPadCanvas.height !== targetH) {
+      touchPadCanvas.width = targetW;
+      touchPadCanvas.height = targetH;
     }
-    if (touchState.activeId !== null) return;
-    // Allow touch drag (and optional mouse drag) directly on canvas/stage
-    if (e.target !== canvas && e.target !== stage) return;
-    touchState.activeId = e.pointerId;
-    touchState.lastX = e.clientX;
-    touchState.lastY = e.clientY;
-    try { stage.setPointerCapture(e.pointerId); } catch (err) { }
-    e.preventDefault();
-  });
 
-  stage.addEventListener('pointermove', function (e) {
-    if (e.pointerId !== touchState.activeId) return;
-    const scale = toLogicalScale();
-    const dx = (e.clientX - touchState.lastX) * scale.sx * 1.15;
-    const dy = (e.clientY - touchState.lastY) * scale.sy * 1.15;
-    touchState.lastX = e.clientX;
-    touchState.lastY = e.clientY;
-    touchState.dragDx += dx;
-    touchState.dragDy += dy;
-    e.preventDefault();
-  });
+    touchPadCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    touchPadCtx.clearRect(0, 0, w, h);
 
-  function endPointer(e) {
-    if (e.pointerId !== touchState.activeId) return;
-    touchState.activeId = null;
+    if (!joystick.active) return;
+
+    const dx = joystick.currX - joystick.originX;
+    const dy = joystick.currY - joystick.originY;
+    const dist = Math.hypot(dx, dy);
+    let kx = joystick.currX;
+    let ky = joystick.currY;
+    if (dist > MAX_RADIUS) {
+      kx = joystick.originX + (dx / dist) * MAX_RADIUS;
+      ky = joystick.originY + (dy / dist) * MAX_RADIUS;
+    }
+
+    touchPadCtx.save();
+
+    // Soft outer joystick ring
+    touchPadCtx.beginPath();
+    touchPadCtx.arc(joystick.originX, joystick.originY, MAX_RADIUS, 0, Math.PI * 2);
+    touchPadCtx.fillStyle = 'rgba(11, 34, 51, 0.45)';
+    touchPadCtx.fill();
+    touchPadCtx.lineWidth = 2;
+    touchPadCtx.strokeStyle = 'rgba(94, 230, 255, 0.52)';
+    touchPadCtx.stroke();
+
+    // Center anchor dot
+    touchPadCtx.beginPath();
+    touchPadCtx.arc(joystick.originX, joystick.originY, 3.5, 0, Math.PI * 2);
+    touchPadCtx.fillStyle = 'rgba(255, 255, 255, 0.45)';
+    touchPadCtx.fill();
+
+    // Glowing inner thumb nub
+    touchPadCtx.shadowColor = 'rgba(94, 230, 255, 0.75)';
+    touchPadCtx.shadowBlur = 12;
+    touchPadCtx.beginPath();
+    touchPadCtx.arc(kx, ky, 16, 0, Math.PI * 2);
+    touchPadCtx.fillStyle = 'rgba(94, 230, 255, 0.68)';
+    touchPadCtx.fill();
+    touchPadCtx.shadowBlur = 0;
+    touchPadCtx.lineWidth = 2;
+    touchPadCtx.strokeStyle = 'rgba(255, 255, 255, 0.9)';
+    touchPadCtx.stroke();
+
+    touchPadCtx.restore();
   }
 
-  stage.addEventListener('pointerup', endPointer);
-  stage.addEventListener('pointercancel', endPointer);
+  function updateJoystickVector(pt) {
+    joystick.currX = pt.x;
+    joystick.currY = pt.y;
 
-  ['touchstart', 'touchmove'].forEach(function (evName) {
-    stage.addEventListener(evName, function (e) {
-      if (document.body.classList.contains('playing')) {
-        e.preventDefault();
+    const dx = pt.x - joystick.originX;
+    const dy = pt.y - joystick.originY;
+    const dist = Math.hypot(dx, dy);
+
+    if (dist <= DEADZONE) {
+      joystick.vx = 0;
+      joystick.vy = 0;
+    } else {
+      const mag = Math.min(1, (dist - DEADZONE) / (MAX_RADIUS - DEADZONE));
+      joystick.vx = (dx / dist) * mag;
+      joystick.vy = (dy / dist) * mag;
+    }
+    renderTouchPadJoystick();
+  }
+
+  // Reveal #touchPad on first touch/pen interaction if browser did not match (pointer: coarse)
+  document.addEventListener('pointerdown', function (e) {
+    if (e.pointerType === 'touch' || e.pointerType === 'pen') {
+      if (!document.body.classList.contains('touch')) {
+        document.body.classList.add('touch');
+        if (window.BH && BH.Game && BH.Game.applyOrientation) {
+          requestAnimationFrame(BH.Game.applyOrientation);
+        }
+        window.dispatchEvent(new Event('resize'));
       }
-    }, { passive: false });
-  });
+    }
+  }, { passive: true });
+
+  if (touchPad) {
+    touchPad.addEventListener('pointerdown', function (e) {
+      if (!document.body.classList.contains('playing')) return;
+      if (joystick.activeId !== null) return;
+
+      const pt = toPadCoords(e.clientX, e.clientY);
+      joystick.active = true;
+      joystick.activeId = e.pointerId;
+      joystick.originX = pt.x;
+      joystick.originY = pt.y;
+      joystick.currX = pt.x;
+      joystick.currY = pt.y;
+      joystick.vx = 0;
+      joystick.vy = 0;
+      renderTouchPadJoystick();
+
+      try { touchPad.setPointerCapture(e.pointerId); } catch (err) { }
+      e.preventDefault();
+    });
+
+    touchPad.addEventListener('pointermove', function (e) {
+      if (e.pointerId !== joystick.activeId) return;
+      const pt = toPadCoords(e.clientX, e.clientY);
+      updateJoystickVector(pt);
+      e.preventDefault();
+    });
+
+    function endPointer(e) {
+      if (e.pointerId !== joystick.activeId) return;
+      clearJoystick();
+    }
+
+    touchPad.addEventListener('pointerup', endPointer);
+    touchPad.addEventListener('pointercancel', endPointer);
+
+    ['touchstart', 'touchmove'].forEach(function (evName) {
+      touchPad.addEventListener(evName, function (e) {
+        if (document.body.classList.contains('playing')) {
+          e.preventDefault();
+        }
+      }, { passive: false });
+    });
+  }
+
+  window.addEventListener('resize', renderTouchPadJoystick);
 
   /* ---- Optional DeviceOrientation Tilt Controls ---- */
   function getScreenAngle() {
@@ -202,10 +312,7 @@
   }
 
   BH.Input = {
-    setLogicalSize: function (w, h) {
-      logicalW = w;
-      logicalH = h;
-    },
+    setLogicalSize: function () {},
     getMove: function () {
       let x = 0, y = 0;
       if (keys.KeyA || keys.ArrowLeft) x -= 1;
@@ -215,6 +322,10 @@
       if (x && y) {
         x *= Math.SQRT1_2;
         y *= Math.SQRT1_2;
+      }
+      if (joystick.active) {
+        x += joystick.vx;
+        y += joystick.vy;
       }
       if (tiltState.enabled) {
         x += tiltState.vx;
@@ -227,12 +338,34 @@
       }
       return { x: x, y: y };
     },
-    consumeDragDelta: function () {
-      const dx = touchState.dragDx;
-      const dy = touchState.dragDy;
-      touchState.dragDx = 0;
-      touchState.dragDy = 0;
-      return { dx: dx, dy: dy };
+    getJoystick: function () {
+      if (!joystick.active) {
+        return {
+          active: false,
+          originX: 0,
+          originY: 0,
+          knobX: 0,
+          knobY: 0,
+          radius: MAX_RADIUS
+        };
+      }
+      const dx = joystick.currX - joystick.originX;
+      const dy = joystick.currY - joystick.originY;
+      const dist = Math.hypot(dx, dy);
+      let kx = joystick.currX;
+      let ky = joystick.currY;
+      if (dist > MAX_RADIUS) {
+        kx = joystick.originX + (dx / dist) * MAX_RADIUS;
+        ky = joystick.originY + (dy / dist) * MAX_RADIUS;
+      }
+      return {
+        active: true,
+        originX: joystick.originX,
+        originY: joystick.originY,
+        knobX: kx,
+        knobY: ky,
+        radius: MAX_RADIUS
+      };
     },
     recalibrateTilt: function () {
       tiltState.calibrated = false;
@@ -245,9 +378,7 @@
     onTiltChange: function (fn) { tiltState.onChange = fn; },
     reset: function () {
       for (const k in keys) keys[k] = false;
-      touchState.activeId = null;
-      touchState.dragDx = 0;
-      touchState.dragDy = 0;
+      clearJoystick();
     }
   };
 })();

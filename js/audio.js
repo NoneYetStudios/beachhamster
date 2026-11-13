@@ -114,6 +114,36 @@
     },
     click() {
       tone({ f: 720, d: 0.035, v: 0.1, type: 'sine' });
+    },
+    streakFlourish(mult, count) {
+      if (!ctx || !sfxOn) return;
+      // Rising pitch flourish that scales with combo streak
+      const scale = [523, 587, 659, 784, 880, 1046, 1175, 1318, 1568, 1760];
+      const idx = Math.min(scale.length - 1, Math.max(0, (count || 1) - 1));
+      const baseF = scale[idx];
+      tone({ f: baseF, f2: baseF * 1.22, d: 0.09, v: 0.17, type: 'triangle' });
+      if (mult >= 1.5) {
+        tone({ f: baseF * 1.25, d: 0.08, v: 0.14, at: 0.035, type: 'sine' });
+      }
+      if (mult >= 2) {
+        tone({ f: baseF * 1.5, d: 0.1, v: 0.15, at: 0.065, type: 'sine' });
+      }
+      if (mult >= 3) {
+        tone({ f: baseF * 2.0, d: 0.14, v: 0.17, at: 0.1, type: 'sine' });
+      }
+    },
+    seaStarChime() {
+      if (!ctx || !sfxOn) return;
+      // Upbeat golden chime for rare sea star power pickup
+      [523, 659, 784, 1046, 1318].forEach(function (f, i) {
+        tone({ f: f, d: 0.14, v: 0.2, at: i * 0.04, type: 'sine' });
+      });
+      tone({ f: 1568, d: 0.22, v: 0.18, at: 0.20, type: 'triangle' });
+    },
+    tideShift() {
+      if (!ctx || !sfxOn) return;
+      noise({ d: 0.45, v: 0.09, f: 380, f2: 850, type: 'bandpass', q: 0.7 });
+      tone({ f: 440, f2: 660, d: 0.18, v: 0.11, type: 'sine' });
     }
   };
 

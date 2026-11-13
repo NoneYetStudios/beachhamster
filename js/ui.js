@@ -267,6 +267,43 @@
       c.restore();
     }
 
+    // Rare Sea Star
+    c = ctxOf('icoStar');
+    if (c) {
+      c.fillStyle = 'rgba(25, 12, 3, 0.65)';
+      c.beginPath();
+      c.ellipse(1.5, 4, 13, 9, 0, 0, TAU);
+      c.fill();
+
+      // 5-pointed star
+      c.beginPath();
+      for (let k = 0; k < 10; k++) {
+        const a = (k * TAU) / 10 - Math.PI / 2;
+        const rad = k % 2 === 0 ? 16 : 6.5;
+        const px = Math.cos(a) * rad;
+        const py = Math.sin(a) * rad;
+        if (k === 0) c.moveTo(px, py);
+        else c.lineTo(px, py);
+      }
+      c.closePath();
+      const sg = c.createRadialGradient(0, 0, 1, 0, 0, 16);
+      sg.addColorStop(0, '#fff4b8');
+      sg.addColorStop(0.45, '#ffd23f');
+      sg.addColorStop(1, '#ff6b57');
+      c.fillStyle = sg;
+      c.fill();
+      c.strokeStyle = '#c43d22';
+      c.lineWidth = 1.6;
+      c.stroke();
+
+      // Center sparkle
+      c.fillStyle = '#ffffff';
+      c.beginPath();
+      c.arc(0, 0, 2.5, 0, TAU);
+      c.fill();
+      c.restore();
+    }
+
     // Crab
     c = ctxOf('icoCrab');
     if (c) {
@@ -511,7 +548,8 @@
     $('goShells').textContent = r.sand_dollars;
     $('goTime').textContent = fmtTime(r.survival_time);
     $('goBreakdown').textContent =
-      'Common ' + r.tiers.common + ' · Sun-Bleached ' + r.tiers.medium + ' · Golden Pearl ' + r.tiers.pearl;
+      'Common ' + r.tiers.common + ' · Sun-Bleached ' + r.tiers.medium + ' · Golden Pearl ' + r.tiers.pearl +
+      (r.tiers.star ? ' · Sea Star ' + r.tiers.star : '');
     $('newHigh').classList.toggle('show', !!r.newHigh);
 
     const msg = $('submitMsg');

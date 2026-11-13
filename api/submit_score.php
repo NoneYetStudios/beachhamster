@@ -55,11 +55,12 @@ if ($score === null || $sandDollars === null || $survivalTime === null) {
 if ($score < 0 || $score > 5000000 || $sandDollars < 0 || $sandDollars > 100000 || $survivalTime < 1 || $survivalTime > 86400) {
     bh_json(['ok' => false, 'error' => 'Score, sand dollars, or survival time out of range.'], 422);
 }
-// Plausibility: survival gives 5 pts/s; shells give 10, 25, or 100 pts (up to 2x with Surf Bonus).
+// Plausibility: survival gives 5 pts/s; pickups give 10, 25, 100, or 150 pts (Sea Star)
+// stacked with up to 2x Surf Bonus and 3x Beachcomber Chain = up to 900 pts per pickup.
 if ($sandDollars > $survivalTime * 12 + 25) {
     bh_json(['ok' => false, 'error' => 'Shell count implausible for survival time.'], 422);
 }
-if ($score > $survivalTime * 25 + $sandDollars * 220 + 500) {
+if ($score > $survivalTime * 25 + $sandDollars * 950 + 1000) {
     bh_json(['ok' => false, 'error' => 'Score failed plausibility validation.'], 422);
 }
 

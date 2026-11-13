@@ -1,12 +1,12 @@
 # Disable directory listing
 Options -Indexes
 
-# Block access to hidden dotfiles (including .git, .env, .htaccess)
+# Block access to hidden dotfiles (including .git, .env, .htaccess) and database/doc/temp files
 <IfModule mod_authz_core.c>
   <FilesMatch "^\.">
     Require all denied
   </FilesMatch>
-  <FilesMatch "\.(sqlite|db|log)$">
+  <FilesMatch "\.(sqlite|sqlite3|sqlite-journal|sqlite-wal|sqlite-shm|db|log|bak|tmp|md)$">
     Require all denied
   </FilesMatch>
 </IfModule>
@@ -15,7 +15,7 @@ Options -Indexes
     Order allow,deny
     Deny from all
   </FilesMatch>
-  <FilesMatch "\.(sqlite|db|log)$">
+  <FilesMatch "\.(sqlite|sqlite3|sqlite-journal|sqlite-wal|sqlite-shm|db|log|bak|tmp|md)$">
     Order allow,deny
     Deny from all
   </FilesMatch>
@@ -26,4 +26,5 @@ Options -Indexes
   Header set X-Content-Type-Options "nosniff"
   Header set X-Frame-Options "SAMEORIGIN"
   Header set X-XSS-Protection "1; mode=block"
+  Header set Referrer-Policy "strict-origin-when-cross-origin"
 </IfModule>

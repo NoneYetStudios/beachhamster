@@ -1,10 +1,16 @@
 # SQLite databases & runtime storage (created dynamically by PHP backend)
 data/*.sqlite
+data/*.sqlite3
 data/*.sqlite-journal
 data/*.sqlite-wal
 data/*.sqlite-shm
 data/*.db
 data/*.log
+*.sqlite
+*.sqlite3
+*.sqlite-journal
+*.sqlite-wal
+*.sqlite-shm
 
 # Operating system artifacts
 .DS_Store
@@ -12,6 +18,8 @@ data/*.log
 ._*
 .Spotlight-V100
 .Trashes
+.AppleDouble
+.LSOverride
 ehthumbs.db
 Thumbs.db
 desktop.ini
@@ -32,6 +40,8 @@ desktop.ini
 
 # Logs and temporary files
 *.log
+error_log
+php_error.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*

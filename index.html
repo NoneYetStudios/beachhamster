@@ -18,6 +18,7 @@
       <div class="stat"><span class="lbl">SCORE</span><span class="val" id="hudScore">0</span></div>
       <div class="stat"><span class="lbl">BEST</span><span class="val" id="hudHi">0</span></div>
       <div class="stat"><span class="lbl">SHELLS</span><span class="val" id="hudShells">0</span></div>
+      <div class="stat streak" id="hudStreak" style="display:none;"><span class="lbl">STREAK</span><span class="val" id="hudStreakVal">1×</span></div>
       <div class="stat"><span class="lbl">TIME</span><span class="val" id="hudTime">00:00</span></div>
       <div class="stat hearts"><span class="lbl">LIVES</span><span class="val" id="hudHearts">♥♥♥</span></div>
     </div>
@@ -50,7 +51,7 @@
             <button class="btn" id="btnBoard" type="button">LEADERBOARD</button>
           </div>
           <div class="hi-line">YOUR BEST: <b id="menuHi">0</b></div>
-          <p class="hint">Desktop: WASD / Arrows · Mobile: Drag or optional Tilt</p>
+          <p class="hint">Desktop: WASD / Arrows · Mobile: Touch Joystick or optional Tilt</p>
           <p class="foot">An STF Arcade release</p>
         </div>
       </section>
@@ -63,20 +64,27 @@
               <h3>Controls</h3>
               <ul>
                 <li><b>Desktop:</b> <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> or <kbd>Arrow</kbd> keys to roam freely in any direction along the endless shoreline.</li>
-                <li><b>Mobile:</b> Drag anywhere on the beach for direct 1:1 steering, or enable <b>TILT</b> in the HUD / Pause menu.</li>
+                <li><b>Mobile:</b> Steer with the floating virtual joystick inside the bottom/side Touch Control Pad, or enable <b>TILT</b> in the HUD / Pause menu.</li>
+                <li><b>Beachcomber Chain:</b> Collect pickups within 2.6s to build a combo streak (up to 3× points!). Resets on damage or timeout.</li>
+                <li><b>Dynamic Tides:</b> 35s coastal cycle pushes surf up ~6% during High Tide, compressing safe sand.</li>
                 <li><b>View Toggle:</b> Auto-detects 9:16 portrait on mobile and 16:9 landscape on desktop, or switch manually via <b>VIEW</b>.</li>
                 <li><kbd>P</kbd> / <kbd>Esc</kbd> pause · <kbd>M</kbd> sound</li>
               </ul>
-              <h3>Sand Dollar Tiers</h3>
+              <h3>Sand Dollar Tiers &amp; Pickups</h3>
               <div class="legend"><canvas class="ico" id="icoCommon" width="48" height="48"></canvas><div><b>Large / Common (10 pts)</b><br>Generous hitbox, plain bleached white along safe mid-beach lanes.</div></div>
               <div class="legend"><canvas class="ico" id="icoMedium" width="48" height="48"></canvas><div><b>Medium / Sun-Bleached (25 pts)</b><br>Standard hitbox, crisp ivory with a subtle star pattern off the main line.</div></div>
-              <div class="legend"><canvas class="ico" id="icoPearl" width="48" height="48"></canvas><div><b>Tiny / Golden "Pearl" (100 pts)</b><br>Tight precision hitbox, golden sheen &amp; glint in receding wash or crab gaps!</div></div>
+              <div class="legend"><canvas class="ico" id="icoPearl" width="48" height="48"></canvas><div><b>Tiny / Golden "Pearl" (100 pts)</b><br>Tight precision hitbox, golden sheen &amp; glint in receding wash or crab gaps! Capped at 1 per wave.</div></div>
+              <div class="legend"><canvas class="ico" id="icoStar" width="48" height="48"></canvas><div><b>Rare Sea Star (150 pts + Speed Burst)</b><br>Vibrant coral-gold star washed ashore every ~24–32s (9s TTL). Grants 150 pts and a 4s +35% Speed Burst!</div></div>
             </div>
             <div>
               <h3>Beach Hazards (3 Lives)</h3>
               <div class="legend"><canvas class="ico" id="icoWave" width="48" height="48"></canvas><div><b>Incoming Waves</b><br>Watch for bubbling foam at the surf edge before waves surge up the beach!</div></div>
-              <div class="legend"><canvas class="ico" id="icoCrab" width="48" height="48"></canvas><div><b>Scurrying Crabs</b><br>Scuttle in from either side of the beach. Thread tight crab pairs for Golden Pearls.</div></div>
-              <div class="legend"><canvas class="ico" id="icoGull" width="48" height="48"></canvas><div><b>Swooping Seagulls</b><br>Track their dark sand shadow — dodge out of the strike ring when they dive!</div></div>
+              <div class="legend"><canvas class="ico" id="icoCrab" width="48" height="48"></canvas><div><b>Scurrying Crabs</b><br>Scuttle in from either side or pop out of bubbling mid-beach <b>Sand Mounds</b> (~1.1s warning). Thread tight crab pairs for Golden Pearls.</div></div>
+              <div class="legend"><canvas class="ico" id="icoGull" width="48" height="48"></canvas><div><b>Swooping Seagulls</b><br>Track their dark sand shadow — dodge out of the dashed strike ring when they dive!</div></div>
+              <ul>
+                <li><b>Sand Mounds:</b> Wiggling, bubbling mounds in the mid-beach erupt into scurrying crabs after ~1.1s.</li>
+                <li><b>Wet-Sand Drag:</b> Damp sand near the waterline and receding wave wash slows you up to 22% (ignored during Sea Star Speed Bursts).</li>
+              </ul>
             </div>
           </div>
           <div class="menu-btns row">
@@ -176,6 +184,9 @@
 
     </div>
   </main>
+  <div id="touchPad" aria-hidden="true">
+    <canvas id="touchPadCanvas"></canvas>
+  </div>
 </div>
 
 <script src="js/config.js"></script>
